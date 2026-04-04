@@ -1,4 +1,22 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""Generate the Bhagamandala House website — landing page + enhanced 3D viewer."""
+import os, shutil
+
+DOCS = os.path.join(os.path.dirname(__file__), "docs")
+VIEWER_SRC = os.path.join(os.path.dirname(__file__), "3d-viewer", "index.html")
+os.makedirs(DOCS, exist_ok=True)
+
+# Copy plan images into docs/img/
+IMG_DIR = os.path.join(DOCS, "img")
+os.makedirs(IMG_DIR, exist_ok=True)
+for f in ["GF_Plan_v4.png", "FF_Plan_v4.png", "Front_Elevation_v4.png",
+          "Back_Elevation_v4.png", "Roof_Solar_v4.png", "Site_Layout_v4.png"]:
+    src = os.path.join(os.path.dirname(__file__), f)
+    if os.path.exists(src):
+        shutil.copy2(src, os.path.join(IMG_DIR, f))
+
+# ─── LANDING PAGE ───────────────────────────────────────────────────────
+LANDING = r'''<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -308,4 +326,15 @@ const obs=new IntersectionObserver((entries)=>{entries.forEach(e=>{if(e.isInters
 document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
 </script>
 </body>
-</html>
+</html>'''
+
+with open(os.path.join(DOCS, "index.html"), "w") as f:
+    f.write(LANDING)
+
+# ── Copy viewer to docs/viewer.html ──────────────────────────────────
+shutil.copy2(VIEWER_SRC, os.path.join(DOCS, "viewer.html"))
+
+print("✓ docs/index.html  — Landing page")
+print("✓ docs/viewer.html  — 3D Viewer")
+print(f"✓ docs/img/         — {len(os.listdir(IMG_DIR))} plan images")
+print("Done.")
