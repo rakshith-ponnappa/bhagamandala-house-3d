@@ -193,12 +193,12 @@ function init(){
   scene.add(new THREE.Mesh(skyG,skyM));
   scene.userData.skyM=skyM;
 
-  camera=new THREE.PerspectiveCamera(50,cv.clientWidth/cv.clientHeight,0.1,500);
-  camera.position.set(16,10,16);
+  camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,500);
+  camera.position.set(16,7,-5);
 
   renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-  renderer.setSize(cv.clientWidth,cv.clientHeight);
+  renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -210,8 +210,8 @@ function init(){
   controls.dampingFactor=0.06;
   controls.maxPolarAngle=Math.PI*0.48;
   controls.minDistance=2;
-  controls.maxDistance=55;
-  controls.target.set(6,1.5,6);
+  controls.maxDistance=40;
+  controls.target.set(6,2,7);
 
   createTextures();
   setupLights();
@@ -472,7 +472,7 @@ function buildRoof(){
 }
 
 function buildSite(){
-  var ground=new THREE.Mesh(new THREE.PlaneGeometry(120*S,90*S),mMat(0x3A6B22,{r:0.95,map:grassTex}));
+  var ground=new THREE.Mesh(new THREE.PlaneGeometry(80*S,65*S),mMat(0x3A6B22,{r:0.95,map:grassTex}));
   ground.rotation.x=-Math.PI/2;ground.position.set(21*S,-0.5*S,19*S);ground.receiveShadow=true;siteG.add(ground);
 
   var road=new THREE.Mesh(new THREE.PlaneGeometry(80*S,10*S),mMat(0x363636,{r:0.88}));
@@ -654,10 +654,10 @@ function onMM(e){
   }else{tt.style.display='none';document.body.style.cursor='default';hovered=null;}
 }
 function onMC(){if(hovered)focusRoom(hovered);}
-function onRS(){var c=document.getElementById('c');camera.aspect=c.clientWidth/c.clientHeight;camera.updateProjectionMatrix();renderer.setSize(c.clientWidth,c.clientHeight);}
+function onRS(){camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);}
 function onKD(e){if(e.key==='r'||e.key==='R')resetCam();if(e.key==='p'||e.key==='P')togPanel();if(e.key==='x'||e.key==='X')togXray();if(e.key==='e'||e.key==='E')togExplode();if(e.key==='n'||e.key==='N')togNight();}
 
-window.resetCam=function(){fly({x:16,y:10,z:16},{x:6,y:1.5,z:6})};
+window.resetCam=function(){fly({x:16,y:7,z:-5},{x:6,y:2,z:7})};
 
 window.togRoof=function(){roofOn=!roofOn;roofG.visible=roofOn;var b=document.getElementById('bRoof');b.textContent=roofOn?'\u25EB Roof Off':'\u25EB Roof On';b.classList.toggle('on',!roofOn);};
 
@@ -696,15 +696,15 @@ window.setFloor=function(f){
   gfG.visible=(f==='all'||f==='gf'||f==='site');ffG.visible=(f==='all'||f==='ff');
   roofG.visible=roofOn&&(f==='all'||f==='ff'||f==='site');siteG.visible=(f==='all'||f==='site');
   furG.visible=(f==='all'||f==='gf'||f==='ff');
-  if(f==='gf')fly({x:12,y:9,z:12},{x:6,y:0,z:7});
-  if(f==='ff')fly({x:8,y:FFY+7,z:16},{x:4,y:FFY,z:7});
-  if(f==='site')fly({x:18,y:22,z:18},{x:6,y:0,z:7});
+  if(f==='gf')fly({x:13,y:7,z:-2},{x:6,y:0,z:6});
+  if(f==='ff')fly({x:10,y:FFY+6,z:-2},{x:6,y:FFY,z:7});
+  if(f==='site')fly({x:6,y:16,z:6},{x:6,y:0,z:7});
   if(f==='all')resetCam();
 };
 
 window.camPreset=function(p){
-  if(p==='bird')fly({x:21*S,y:22,z:19*S},{x:6,y:0,z:6});
-  if(p==='front')fly({x:21*S,y:3.5,z:-4},{x:21*S,y:2.5,z:8});
+  if(p==='bird')fly({x:6.3,y:14,z:6.5},{x:6.3,y:0,z:6.5});
+  if(p==='front')fly({x:6.3,y:3,z:-4},{x:6.3,y:2,z:4});
   if(p==='inside')fly({x:33*S,y:GFY+1.4,z:15*S},{x:28*S,y:GFY+1.4,z:11*S});
   if(p==='sitout')fly({x:13*S,y:FFY+1.4,z:44*S},{x:13*S,y:FFY+1,z:50*S});
 };
