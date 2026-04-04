@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bhagamandala Residence — 3D Interactive Walkthrough</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── TOP NAV ── */
+  #topNav {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: 60px;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 30px;
+    z-index: 100;
+  }
+  #topNav .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px; font-weight: 600;
+    color: #c4956a;
+    letter-spacing: 1px;
+  }
+  #topNav .logo span { color: #666; font-weight: 400; font-size: 13px; margin-left: 10px; }
+  #topNav .nav-controls {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .nav-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: #bbb;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+  }
+  .nav-btn:hover { background: rgba(196,149,106,0.15); color: #c4956a; border-color: rgba(196,149,106,0.3); }
+  .nav-btn.active { background: rgba(196,149,106,0.2); color: #c4956a; border-color: #c4956a; }
+
+  /* ── LEFT PANEL ── */
+  #leftPanel {
+    position: fixed; top: 60px; left: 0; bottom: 0;
+    width: 320px;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.06);
+    overflow-y: auto;
+    z-index: 90;
+    padding: 20px;
+    transition: transform 0.3s;
+  }
+  #leftPanel.collapsed { transform: translateX(-320px); }
+
+  .panel-section { margin-bottom: 24px; }
+  .panel-section h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 13px; color: #c4956a;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(196,149,106,0.15);
+  }
+
+  .room-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .room-card:hover {
+    background: rgba(196,149,106,0.08);
+    border-color: rgba(196,149,106,0.2);
+    transform: translateX(4px);
+  }
+  .room-card.active {
+    background: rgba(196,149,106,0.12);
+    border-color: #c4956a;
+  }
+  .room-color-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .room-card .room-name {
+    font-size: 13px; font-weight: 500; color: #ddd;
+  }
+  .room-card .room-size {
+    font-size: 11px; color: #777; margin-top: 2px;
+  }
+
+  /* ── ROOM DETAIL POPUP ── */
+  #roomDetail {
+    position: fixed; bottom: 20px; right: 20px;
+    width: 380px;
+    background: rgba(15,15,15,0.95);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(196,149,106,0.2);
+    border-radius: 14px;
+    padding: 24px;
+    z-index: 100;
+    display: none;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  #roomDetail .detail-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+  }
+  #roomDetail h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; color: #c4956a;
+  }
+  #roomDetail .close-btn {
+    background: none; border: none; color: #666;
+    font-size: 20px; cursor: pointer;
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  #roomDetail .close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .detail-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+  .detail-item .label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .detail-item .value { font-size: 14px; color: #ddd; font-weight: 500; }
+  .detail-item.full { grid-column: span 2; }
+
+  /* ── BOTTOM STATS BAR ── */
+  #statsBar {
+    position: fixed; bottom: 0; left: 320px; right: 0;
+    height: 50px;
+    background: rgba(10,10,10,0.92);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center; gap: 40px;
+    z-index: 90;
+    font-size: 11px;
+  }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat .stat-val { font-size: 16px; font-weight: 600; color: #c4956a; font-family: 'Playfair Display', serif; }
+  .stat .stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+  /* ── 3D CANVAS ── */
+  #canvas3d {
+    position: fixed;
+    top: 60px; left: 320px; right: 0; bottom: 50px;
+    z-index: 1;
+  }
+
+  /* ── LOADING ── */
+  #loading {
+    position: fixed; inset: 0;
+    background: #0a0a0a;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+    transition: opacity 0.6s;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  #loading h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px; color: #c4956a;
+    margin-bottom: 10px;
+  }
+  #loading p { color: #666; font-size: 14px; margin-bottom: 30px; }
+  .loader {
+    width: 200px; height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .loader-bar {
+    width: 0; height: 100%;
+    background: linear-gradient(90deg, #c4956a, #d4a574);
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  /* ── FLOOR TOGGLE ── */
+  #floorToggle {
+    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 4px;
+    background: rgba(10,10,10,0.9);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 4px;
+    z-index: 95;
+  }
+  .floor-btn {
+    padding: 8px 20px;
+    border-radius: 7px;
+    border: none;
+    background: transparent;
+    color: #888;
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .floor-btn:hover { color: #ccc; }
+  .floor-btn.active {
+    background: rgba(196,149,106,0.2);
+    color: #c4956a;
+  }
+
+  /* ── KEYBOARD HINT ── */
+  #keyHint {
+    position: fixed; bottom: 60px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; color: #444;
+    z-index: 90;
+    display: flex; gap: 20px;
+  }
+  #keyHint kbd {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 2px 7px; border-radius: 4px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+  }
+
+  /* ── VASTU BADGE ── */
+  .vastu-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(230,81,0,0.1);
+    border: 1px solid rgba(230,81,0,0.2);
+    color: #E65100;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: 8px;
+  }
+
+  .heritage-tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(196,149,106,0.1);
+    border: 1px solid rgba(196,149,106,0.2);
+    color: #c4956a;
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 9px; font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(196,149,106,0.3); border-radius: 4px; }
+
+  /* Tooltip on hover */
+  #tooltip {
+    position: fixed;
+    background: rgba(10,10,10,0.95);
+    border: 1px solid rgba(196,149,106,0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #ddd;
+    pointer-events: none;
+    z-index: 200;
+    display: none;
+    white-space: nowrap;
+  }
+  #tooltip .tt-name { font-weight: 600; color: #c4956a; }
+  #tooltip .tt-size { color: #888; font-size: 11px; }
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading">
+  <h1>Bhagamandala Residence</h1>
+  <p>Loading 3D Walkthrough — Kodagu, Karnataka</p>
+  <div class="loader"><div class="loader-bar" id="loaderBar"></div></div>
+</div>
+
+<!-- Top Navigation -->
+<nav id="topNav">
+  <div class="logo">
+    BHAGAMANDALA <span>Residence &mdash; Kodagu</span>
+  </div>
+  <div class="nav-controls">
+    <button class="nav-btn" onclick="resetCamera()">Reset View</button>
+    <button class="nav-btn" id="btnExplode" onclick="toggleExplode()">Explode</button>
+    <button class="nav-btn" id="btnRoof" onclick="toggleRoof()">Hide Roof</button>
+    <button class="nav-btn" id="btnWalls" onclick="toggleWallTransparency()">X-Ray</button>
+    <button class="nav-btn" id="btnDayNight" onclick="toggleDayNight()">Night</button>
+    <button class="nav-btn" onclick="toggleSection()">Section Cut</button>
+  </div>
+</nav>
+
+<!-- Floor Toggle -->
+<div id="floorToggle">
+  <button class="floor-btn active" data-floor="all" onclick="setFloor('all')">All Floors</button>
+  <button class="floor-btn" data-floor="gf" onclick="setFloor('gf')">Ground Floor</button>
+  <button class="floor-btn" data-floor="ff" onclick="setFloor('ff')">First Floor</button>
+  <button class="floor-btn" data-floor="site" onclick="setFloor('site')">Site Plan</button>
+</div>
+
+<!-- Left Panel -->
+<div id="leftPanel">
+  <div class="panel-section">
+    <h3>Project Overview</h3>
+    <div style="font-size:12px; line-height:1.7; color:#999;">
+      <div style="color:#ddd; font-family:'Playfair Display',serif; font-size:16px; margin-bottom:8px;">
+        Bhagamandala-Talakaveri Road
+      </div>
+      <div>Plot: 60 &times; 50 ft (3,000 sqft)</div>
+      <div>Building: 42 &times; 38 ft (G+1)</div>
+      <div>Built-up: ~2,909 sqft</div>
+      <div>Roof: Mangalore Clay Tiles</div>
+      <div class="vastu-badge" style="margin-top:10px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2v20M2 12h20"/></svg>
+        Vastu Compliant
+      </div>
+      <div class="heritage-tag" style="margin-top:8px;">
+        Kodagu Ainmane Heritage
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-section" id="gfRoomList">
+    <h3>Ground Floor</h3>
+  </div>
+
+  <div class="panel-section" id="ffRoomList">
+    <h3>First Floor</h3>
+  </div>
+
+  <div class="panel-section">
+    <h3>Materials</h3>
+    <div style="font-size:11px; color:#888; line-height:1.8;">
+      <div><span style="display:inline-block;width:10px;height:10px;background:#C17A56;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Exposed Laterite + Linseed Oil (Bedrooms)</div>
+      <div><span style="display:inline-block;width:10px;height:10px;background:#F5F5DC;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Plastered + AP Emulsion (Hall/Kitchen)</div>
+      <div><span style="display:inline-block;width:10px;height:10px;background:#E0F2F1;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Ceramic Tiles (Bathrooms)</div>
+      <div><span style="display:inline-block;width:10px;height:10px;background:#D2691E;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Mangalore Clay Tiles (Roof)</div>
+      <div><span style="display:inline-block;width:10px;height:10px;background:#DEB887;border-radius:2px;margin-right:6px;vertical-align:middle;"></span>Kota Stone (Veranda/Jagali)</div>
+    </div>
+  </div>
+</div>
+
+<!-- Room Detail Popup -->
+<div id="roomDetail">
+  <div class="detail-header">
+    <h2 id="detailTitle">Room</h2>
+    <button class="close-btn" onclick="closeDetail()">&times;</button>
+  </div>
+  <div class="detail-grid" id="detailGrid"></div>
+</div>
+
+<!-- 3D Canvas -->
+<canvas id="canvas3d"></canvas>
+
+<!-- Stats Bar -->
+<div id="statsBar">
+  <div class="stat"><div class="stat-val">2,909</div><div class="stat-label">Total Sqft</div></div>
+  <div class="stat"><div class="stat-val">G+1</div><div class="stat-label">Floors</div></div>
+  <div class="stat"><div class="stat-val">3 BR</div><div class="stat-label">Bedrooms</div></div>
+  <div class="stat"><div class="stat-val">3</div><div class="stat-label">Bathrooms</div></div>
+  <div class="stat"><div class="stat-val">42&times;38</div><div class="stat-label">Footprint (ft)</div></div>
+  <div class="stat"><div class="stat-val">&lt;1 Cr</div><div class="stat-label">Budget (&pound;)</div></div>
+</div>
+
+<!-- Keyboard Hint -->
+<div id="keyHint">
+  <span><kbd>Drag</kbd> Rotate</span>
+  <span><kbd>Scroll</kbd> Zoom</span>
+  <span><kbd>Right-drag</kbd> Pan</span>
+  <span><kbd>Click</kbd> room for details</span>
+  <span><kbd>R</kbd> Reset</span>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip">
+  <div class="tt-name" id="ttName"></div>
+  <div class="tt-size" id="ttSize"></div>
+</div>
+
+<!-- THREE.JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<script>
+// ════════════════════════════════════════════
+//  BHAGAMANDALA RESIDENCE — 3D ARCHITECTURAL
+//  MODEL WITH INTERACTIVE WALKTHROUGH
+// ════════════════════════════════════════════
+
+// ── ROOM DATA ──
+// Coordinate system: x=South→North, z=East(road)→West(estate)
+// GF interior: x=0..42, z=8..38 (veranda z=0..8)
+// FF: same x-range but only x=0..26 (above south row + service strip)
+
+const SCALE = 0.3;   // 1 foot = 0.3 three.js units
+const WALL_H_GF = 10;  // 10 ft wall height
+const WALL_H_FF = 10;
+const SLAB_THICK = 0.8; // ft
+const WALL_THICK = 0.75;
+
+const GF_Y = 0;
+const FF_Y = (WALL_H_GF + SLAB_THICK) * SCALE;
+
+const rooms = {
+  // ── GROUND FLOOR ──
+  gf_hall:     { name:'Hall / Living',     floor:'gf', x:26,z:8,  w:16,d:16, color:0xFAFAF0, vastu:'NE', wall:'Plastered — AP Marshmallow 8147', flooring:'Beige vitrified 2×4', features:['Pooja NE corner','TV unit','L-Sofa','6-seat Dining'] },
+  gf_master:   { name:'Master Bedroom',    floor:'gf', x:0, z:22, w:16,d:16, color:0xD4A574, vastu:'SW', wall:'Exposed Laterite + Linseed Oil', flooring:'Beige vitrified', features:['King Bed 6\'×6\'6"','Double Wardrobe','Dressing Unit','Ainmane Heritage Walls'], heritage:true },
+  gf_br2:      { name:'Bedroom 2 (Guest)', floor:'gf', x:26,z:24, w:14,d:14, color:0xDEB894, vastu:'NW', wall:'Exposed Laterite + Linseed Oil', flooring:'Beige vitrified', features:['Queen Bed 5\'×6\'6"','Wardrobe','Study Desk','Ainmane Heritage Walls'], heritage:true },
+  gf_kitchen:  { name:'Kitchen',           floor:'gf', x:0, z:8,  w:16,d:14, color:0xFFFCF0, vastu:'SE', wall:'Plastered — AP Buttercup 7958', flooring:'Anti-skid ceramic', features:['L-shaped slab+sink','Fridge alcove','Chimney point','Adj. to Store'] },
+  gf_store:    { name:'Store Room',        floor:'gf', x:16,z:30, w:10,d:8,  color:0xF0F0F0, vastu:'W',  wall:'Plastered — White', flooring:'Cement/Kota', features:['Kitchen access door','Inverter + DB','Under-stair storage'] },
+  gf_bath1:    { name:'Bath 1 (Master)',   floor:'gf', x:16,z:13, w:10,d:7,  color:0xE0F2F1, vastu:'Center', wall:'Ceramic tiles to 7\'', flooring:'Anti-skid ceramic', features:['Rain shower encl. 4×3','WC commode','5\' granite basin','25L geyser'] },
+  gf_bath2:    { name:'Bath 2 (BR2)',      floor:'gf', x:16,z:23, w:10,d:7,  color:0xE0F2F1, vastu:'Center', wall:'Ceramic tiles to 7\'', flooring:'Anti-skid ceramic', features:['Rain shower encl. 4×3','WC commode','5\' granite basin','25L geyser'] },
+  gf_passage:  { name:'Passage',           floor:'gf', x:16,z:20, w:10,d:3,  color:0xF5F5F5, vastu:'Center', wall:'White', flooring:'Vitrified', features:['3\' wide corridor'] },
+  gf_stair:    { name:'Staircase',         floor:'gf', x:16,z:8,  w:10,d:5,  color:0xEEEEEE, vastu:'Center-E', wall:'White', flooring:'Granite steps', features:['Under-stair storage','Granite treads','MS railing'] },
+  gf_veranda:  { name:'Veranda / Jagali',  floor:'gf', x:0, z:0,  w:42,d:8,  color:0xDEB887, vastu:'East', wall:'Open — 5 wood pillars', flooring:'Kota Stone', features:['Wooden swing','Sitting chairs','Shoe rack','5 teak pillars','Kodagu Jagali style'] },
+  gf_gwc:      { name:'Guest WC',          floor:'gf', x:38,z:2,  w:4, d:4,  color:0xF3E5F5, vastu:'NE-Veranda', wall:'Ceramic tiles', flooring:'Anti-skid', features:['Compact WC','Wash basin'] },
+
+  // ── FIRST FLOOR ──
+  ff_master:   { name:'FF Master Bedroom', floor:'ff', x:0, z:22, w:16,d:16, color:0xD4A574, vastu:'SW', wall:'Exposed Laterite + Linseed Oil', flooring:'Beige vitrified', features:['King Bed 6\'×6\'6"','Walk-in Closet Area','Dressing Table','Reading Chair','Ainmane Heritage Walls'], heritage:true },
+  ff_family:   { name:'Family Hall / TV',  floor:'ff', x:0, z:8,  w:16,d:14, color:0xFAFAF5, vastu:'SE', wall:'Plastered — AP Marshmallow 8147', flooring:'Beige vitrified', features:['L-shaped Sofa','TV Unit','Casual family space'] },
+  ff_work:     { name:'Work Room / Study', floor:'ff', x:16,z:8,  w:10,d:14, color:0xFFF3E0, vastu:'NE', wall:'Plastered — AP Ivory Spark 8013', flooring:'Beige vitrified', features:['L-Desk + Monitor','Book Shelf','Filing + Printer','Dedicated home office','LAN port, USB-C, UPS'] },
+  ff_bath3:    { name:'Bath 3 (FF Master)',floor:'ff', x:16,z:26, w:10,d:7,  color:0xE0F2F1, vastu:'Center', wall:'Ceramic tiles to 7\'', flooring:'Anti-skid ceramic', features:['Rain shower encl. 4×3','WC','5\' granite basin','25L geyser'] },
+  ff_passage:  { name:'Landing + Passage', floor:'ff', x:16,z:22, w:10,d:4,  color:0xF5F5F5, vastu:'Center', wall:'White', flooring:'Vitrified', features:['4\' wide landing'] },
+  ff_stair:    { name:'Staircase (FF)',    floor:'ff', x:16,z:33, w:10,d:5,  color:0xEEEEEE, vastu:'Center', wall:'White', flooring:'Granite steps', features:['Continues to terrace'] },
+  ff_sitout:   { name:'Covered Sitout',    floor:'ff', x:0, z:38, w:26,d:8,  color:0xF5FAF0, vastu:'West', wall:'Open — MS grill screen', flooring:'Anti-skid tiles', features:['26\'×8\' = 208 sqft','Coffee estate panoramic view','Wooden swing','Daybed','Western Ghats sunset view'] },
+};
+
+// ════════════════════════════════════════════
+//  SCENE SETUP
+// ════════════════════════════════════════════
+
+let scene, camera, renderer, controls;
+let raycaster, mouse;
+let roomMeshes = [];
+let roofGroup, gfGroup, ffGroup, siteGroup;
+let isNight = false, isExploded = false, roofVisible = true, xrayMode = false, sectionMode = false;
+let hoveredRoom = null;
+let animId;
+
+function init() {
+  const canvas = document.getElementById('canvas3d');
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1a2e);
+  scene.fog = new THREE.FogExp2(0x1a1a2e, 0.006);
+
+  camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.1, 500);
+  camera.position.set(25, 18, 30);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI * 0.48;
+  controls.minDistance = 5;
+  controls.maxDistance = 80;
+  controls.target.set(6, 2, 7);
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+
+  setupLights();
+  buildHouse();
+  buildSite();
+  populateRoomList();
+
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('click', onMouseClick);
+  window.addEventListener('resize', onResize);
+  window.addEventListener('keydown', onKeyDown);
+
+  // Loading animation
+  let progress = 0;
+  const bar = document.getElementById('loaderBar');
+  const intv = setInterval(() => {
+    progress += Math.random() * 25 + 10;
+    if (progress > 100) progress = 100;
+    bar.style.width = progress + '%';
+    if (progress >= 100) {
+      clearInterval(intv);
+      setTimeout(() => document.getElementById('loading').classList.add('hidden'), 400);
+    }
+  }, 150);
+
+  animate();
+}
+
+function setupLights() {
+  // Ambient
+  const ambient = new THREE.AmbientLight(0xffeedd, 0.4);
+  scene.add(ambient);
+  scene.userData.ambient = ambient;
+
+  // Hemisphere (sky/ground)
+  const hemi = new THREE.HemisphereLight(0x87CEEB, 0x556B2F, 0.3);
+  scene.add(hemi);
+  scene.userData.hemi = hemi;
+
+  // Sun (directional)
+  const sun = new THREE.DirectionalLight(0xfff4e0, 0.9);
+  sun.position.set(30, 40, -20);
+  sun.castShadow = true;
+  sun.shadow.mapSize.width = 2048;
+  sun.shadow.mapSize.height = 2048;
+  sun.shadow.camera.near = 0.5;
+  sun.shadow.camera.far = 120;
+  sun.shadow.camera.left = -30;
+  sun.shadow.camera.right = 30;
+  sun.shadow.camera.top = 30;
+  sun.shadow.camera.bottom = -30;
+  scene.add(sun);
+  scene.userData.sun = sun;
+
+  // Fill light
+  const fill = new THREE.DirectionalLight(0xc4956a, 0.2);
+  fill.position.set(-20, 10, 20);
+  scene.add(fill);
+  scene.userData.fill = fill;
+}
+
+// ════════════════════════════════════════════
+//  BUILD HOUSE
+// ════════════════════════════════════════════
+
+function makeWall(w, h, d, color, opacity) {
+  const geo = new THREE.BoxGeometry(w, h, d);
+  const mat = new THREE.MeshStandardMaterial({
+    color, roughness: 0.85, metalness: 0.05,
+    transparent: opacity < 1, opacity
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function makeFloor(w, d, color, y) {
+  const geo = new THREE.BoxGeometry(w, SLAB_THICK * SCALE, d);
+  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.7, metalness: 0.02 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.y = y;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function addRoom(group, r, key, baseY) {
+  const S = SCALE;
+  const wallH = WALL_H_GF * S;
+  const x = r.x * S;
+  const z = r.z * S;
+  const w = r.w * S;
+  const d = r.d * S;
+  const cx = x + w / 2;
+  const cz = z + d / 2;
+
+  // Floor slab per room
+  const floorGeo = new THREE.BoxGeometry(w - 0.05, 0.06, d - 0.05);
+  const isLaterite = r.heritage === true;
+  const floorMat = new THREE.MeshStandardMaterial({
+    color: r.color,
+    roughness: isLaterite ? 0.95 : 0.6,
+    metalness: isLaterite ? 0.0 : 0.02
+  });
+  const floor = new THREE.Mesh(floorGeo, floorMat);
+  floor.position.set(cx, baseY + 0.03, cz);
+  floor.receiveShadow = true;
+  floor.userData = { roomKey: key, roomData: r };
+  group.add(floor);
+  roomMeshes.push(floor);
+
+  // Semi-transparent room volume for hover/click
+  const volGeo = new THREE.BoxGeometry(w - 0.1, wallH * 0.6, d - 0.1);
+  const volMat = new THREE.MeshStandardMaterial({
+    color: r.color,
+    transparent: true,
+    opacity: 0.08,
+    roughness: 0.9,
+    depthWrite: false
+  });
+  const vol = new THREE.Mesh(volGeo, volMat);
+  vol.position.set(cx, baseY + wallH * 0.3, cz);
+  vol.userData = { roomKey: key, roomData: r };
+  group.add(vol);
+  roomMeshes.push(vol);
+
+  // Room walls (thin box per side, inside the room)
+  const wt = 0.06;  // visual wall thickness
+  const wallColor = isLaterite ? 0xB86F4A : 0xF5F0E8;
+  const wallMat = new THREE.MeshStandardMaterial({
+    color: wallColor,
+    roughness: isLaterite ? 0.95 : 0.7,
+    metalness: 0.02,
+    transparent: true,
+    opacity: 0.85
+  });
+
+  // South wall (x=r.x)
+  const sw = new THREE.Mesh(new THREE.BoxGeometry(wt, wallH, d), wallMat);
+  sw.position.set(x + wt / 2, baseY + wallH / 2, cz);
+  sw.castShadow = true;
+  group.add(sw);
+
+  // North wall (x=r.x+r.w)
+  const nw = new THREE.Mesh(new THREE.BoxGeometry(wt, wallH, d), wallMat);
+  nw.position.set(x + w - wt / 2, baseY + wallH / 2, cz);
+  nw.castShadow = true;
+  group.add(nw);
+
+  // East wall (z=r.z)
+  const ew = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, wt), wallMat);
+  ew.position.set(cx, baseY + wallH / 2, z + wt / 2);
+  ew.castShadow = true;
+  group.add(ew);
+
+  // West wall (z=r.z+r.d)
+  const ww = new THREE.Mesh(new THREE.BoxGeometry(w, wallH, wt), wallMat);
+  ww.position.set(cx, baseY + wallH / 2, z + d - wt / 2);
+  ww.castShadow = true;
+  group.add(ww);
+
+  // Room label (3D text sprite)
+  const label = makeLabel(r.name, cx, baseY + wallH * 0.55, cz);
+  group.add(label);
+
+  // Size label
+  const sizeLabel = makeLabel(`${r.w}'×${r.d}' = ${r.w * r.d} sqft`, cx, baseY + wallH * 0.38, cz, 10, '#999');
+  group.add(sizeLabel);
+}
+
+function makeLabel(text, x, y, z, size, color) {
+  const canvas = document.createElement('canvas');
+  const fontSize = size || 14;
+  canvas.width = 512;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = color || '#333';
+  ctx.font = `${fontSize}px Inter, Arial, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 256, 32);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.position.set(x, y, z);
+  sprite.scale.set(3, 0.4, 1);
+  return sprite;
+}
+
+function buildHouse() {
+  gfGroup = new THREE.Group();
+  ffGroup = new THREE.Group();
+  roofGroup = new THREE.Group();
+
+  const S = SCALE;
+  const wallH = WALL_H_GF * S;
+
+  // ── GF SLAB (foundation) ──
+  const gfSlab = makeFloor(42 * S, 38 * S, 0xB0B0A8, GF_Y);
+  gfSlab.position.x = 21 * S;
+  gfSlab.position.z = 19 * S;
+  gfGroup.add(gfSlab);
+
+  // ── Build GF rooms ──
+  Object.entries(rooms).forEach(([key, room]) => {
+    if (room.floor === 'gf') addRoom(gfGroup, room, key, GF_Y);
+  });
+
+  // ── GF External walls (thicker) ──
+  const extWallColor = 0xF5EFE0;
+  const extT = WALL_THICK * S;
+  const extH = wallH;
+
+  // South external wall
+  const sExt = makeWall(extT, extH, 38 * S, extWallColor, 0.9);
+  sExt.position.set(0, GF_Y + extH / 2, 19 * S);
+  gfGroup.add(sExt);
+
+  // North external wall
+  const nExt = makeWall(extT, extH, 38 * S, extWallColor, 0.9);
+  nExt.position.set(42 * S, GF_Y + extH / 2, 19 * S);
+  gfGroup.add(nExt);
+
+  // East external wall (road side — higher compound not shown, just building wall)
+  const eExt = makeWall(42 * S, extH, extT, extWallColor, 0.9);
+  eExt.position.set(21 * S, GF_Y + extH / 2, 0);
+  gfGroup.add(eExt);
+
+  // West external wall
+  const wExt = makeWall(42 * S, extH, extT, extWallColor, 0.9);
+  wExt.position.set(21 * S, GF_Y + extH / 2, 38 * S);
+  gfGroup.add(wExt);
+
+  // Veranda-back wall at z=8
+  const vBack = makeWall(42 * S, extH, extT, extWallColor, 0.9);
+  vBack.position.set(21 * S, GF_Y + extH / 2, 8 * S);
+  gfGroup.add(vBack);
+
+  // Veranda pillars
+  [5, 13, 21, 29, 37].forEach(px => {
+    const pillarGeo = new THREE.CylinderGeometry(0.15, 0.18, wallH, 12);
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x5D3A1A, roughness: 0.6 });
+    const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+    pillar.position.set(px * S, GF_Y + wallH / 2, 3 * S);
+    pillar.castShadow = true;
+    gfGroup.add(pillar);
+  });
+
+  // ── FF SLAB ──
+  const ffSlab = makeFloor(26 * S, 30 * S, 0xC0C0B8, FF_Y);
+  ffSlab.position.x = 13 * S;
+  ffSlab.position.z = 23 * S;
+  ffGroup.add(ffSlab);
+
+  // Sitout slab (extending west)
+  const sitoutSlab = makeFloor(26 * S, 8 * S, 0xA8B8A0, FF_Y);
+  sitoutSlab.position.x = 13 * S;
+  sitoutSlab.position.z = 42 * S;
+  ffGroup.add(sitoutSlab);
+
+  // ── Build FF rooms ──
+  Object.entries(rooms).forEach(([key, room]) => {
+    if (room.floor === 'ff') addRoom(ffGroup, room, key, FF_Y);
+  });
+
+  // ── FF external walls ──
+  // South wall
+  const ffS = makeWall(extT, extH, 30 * S, extWallColor, 0.9);
+  ffS.position.set(0, FF_Y + extH / 2, 23 * S);
+  ffGroup.add(ffS);
+
+  // North wall (only 26ft wide)
+  const ffN = makeWall(extT, extH, 30 * S, extWallColor, 0.9);
+  ffN.position.set(26 * S, FF_Y + extH / 2, 23 * S);
+  ffGroup.add(ffN);
+
+  // East wall (road side — SOLID for privacy)
+  const ffE = makeWall(26 * S, extH, extT, 0xE8E0D0, 0.95);
+  ffE.position.set(13 * S, FF_Y + extH / 2, 8 * S);
+  ffGroup.add(ffE);
+
+  // West wall (before sitout)
+  const ffW = makeWall(26 * S, extH * 0.35, extT, 0xE0E0D8, 0.8);  // Parapet
+  ffW.position.set(13 * S, FF_Y + extH * 0.175, 38 * S);
+  ffGroup.add(ffW);
+
+  // ── ROOF ──
+  buildRoof();
+
+  // Sitout pillars (3 supporting columns)
+  [4, 13, 22].forEach(px => {
+    const pilGeo = new THREE.CylinderGeometry(0.12, 0.15, FF_Y + SLAB_THICK * S, 8);
+    const pilMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.4, metalness: 0.3 });
+    const pil = new THREE.Mesh(pilGeo, pilMat);
+    pil.position.set(px * S, (FF_Y + SLAB_THICK * S) / 2, 42 * S);
+    pil.castShadow = true;
+    gfGroup.add(pil);
+  });
+
+  scene.add(gfGroup);
+  scene.add(ffGroup);
+  scene.add(roofGroup);
+}
+
+function buildRoof() {
+  const S = SCALE;
+  const roofY = FF_Y + WALL_H_FF * S;
+
+  // Mangalore tile roof — pitched shape using ExtrudeGeometry
+  const roofColor = 0xB85C38;
+
+  // Main building roof ridge runs North-South (along x-axis)
+  // Building footprint: x=0..26(FF), z=8..38
+  const roofW = 28 * S;
+  const roofD = 32 * S;
+  const ridgeH = 4 * S;
+
+  // Create a simple triangular prism roof
+  const shape = new THREE.Shape();
+  shape.moveTo(-roofD / 2, 0);
+  shape.lineTo(0, ridgeH);
+  shape.lineTo(roofD / 2, 0);
+  shape.lineTo(-roofD / 2, 0);
+
+  const extrudeSettings = { depth: roofW, bevelEnabled: false };
+  const roofGeo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+  const roofMat = new THREE.MeshStandardMaterial({ color: roofColor, roughness: 0.9, metalness: 0.05, side: THREE.DoubleSide });
+  const roof = new THREE.Mesh(roofGeo, roofMat);
+  roof.rotation.y = Math.PI / 2;
+  roof.position.set(27 * S, roofY, 23 * S);
+  roof.castShadow = true;
+  roof.receiveShadow = true;
+  roofGroup.add(roof);
+
+  // Veranda roof (lower)
+  const vRoofShape = new THREE.Shape();
+  const vD = 10 * S;
+  vRoofShape.moveTo(0, 0);
+  vRoofShape.lineTo(vD, -2 * S);
+  vRoofShape.lineTo(vD, -2 * S - 0.15);
+  vRoofShape.lineTo(0, -0.15);
+  vRoofShape.lineTo(0, 0);
+
+  const vRoofGeo = new THREE.ExtrudeGeometry(vRoofShape, { depth: 42 * S, bevelEnabled: false });
+  const vRoof = new THREE.Mesh(vRoofGeo, roofMat);
+  vRoof.rotation.y = Math.PI / 2;
+  vRoof.position.set(42 * S, roofY - 1 * S, 8 * S);
+  vRoof.castShadow = true;
+  roofGroup.add(vRoof);
+
+  // Sitout lean-to roof
+  const sRoofShape = new THREE.Shape();
+  const sD = 9 * S;
+  sRoofShape.moveTo(0, 0);
+  sRoofShape.lineTo(sD, -1.5 * S);
+  sRoofShape.lineTo(sD, -1.5 * S - 0.12);
+  sRoofShape.lineTo(0, -0.12);
+  sRoofShape.lineTo(0, 0);
+
+  const sRoofGeo = new THREE.ExtrudeGeometry(sRoofShape, { depth: 26 * S, bevelEnabled: false });
+  const sRoof = new THREE.Mesh(sRoofGeo, roofMat);
+  sRoof.rotation.y = Math.PI / 2;
+  sRoof.position.set(26 * S, roofY - 0.5 * S, 38 * S);
+  sRoof.castShadow = true;
+  roofGroup.add(sRoof);
+}
+
+function buildSite() {
+  siteGroup = new THREE.Group();
+
+  const S = SCALE;
+
+  // Ground plane (plot: 60×50)
+  const groundGeo = new THREE.PlaneGeometry(80 * S, 70 * S);
+  const groundMat = new THREE.MeshStandardMaterial({ color: 0x3B5323, roughness: 0.95 });
+  const ground = new THREE.Mesh(groundGeo, groundMat);
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(21 * S, -0.05, 19 * S);
+  ground.receiveShadow = true;
+  siteGroup.add(ground);
+
+  // Plot boundary
+  const plotGeo = new THREE.PlaneGeometry(60 * S, 50 * S);
+  const plotMat = new THREE.MeshStandardMaterial({ color: 0x4A7023, roughness: 0.9 });
+  const plot = new THREE.Mesh(plotGeo, plotMat);
+  plot.rotation.x = -Math.PI / 2;
+  plot.position.set(21 * S, -0.02, 19 * S);
+  plot.receiveShadow = true;
+  siteGroup.add(plot);
+
+  // Road (east)
+  const roadGeo = new THREE.PlaneGeometry(60 * S, 8 * S);
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.8 });
+  const road = new THREE.Mesh(roadGeo, roadMat);
+  road.rotation.x = -Math.PI / 2;
+  road.position.set(21 * S, -0.01, -8 * S);
+  road.receiveShadow = true;
+  siteGroup.add(road);
+
+  // Compound wall (simple boxes)
+  const wallH = 2.1 * S;  // 7ft on road side
+  const cwMat = new THREE.MeshStandardMaterial({ color: 0xD4C4A8, roughness: 0.85 });
+
+  // East compound wall (7ft)
+  const cwE = new THREE.Mesh(new THREE.BoxGeometry(60 * S, wallH, 0.5 * S), cwMat);
+  cwE.position.set(21 * S, wallH / 2, -3 * S);
+  cwE.castShadow = true;
+  siteGroup.add(cwE);
+
+  // Gate opening marker
+  const gateMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.6, roughness: 0.3 });
+  const gatePost1 = new THREE.Mesh(new THREE.BoxGeometry(0.4 * S, wallH * 1.2, 0.4 * S), gateMat);
+  gatePost1.position.set(25 * S, wallH * 0.6, -3 * S);
+  siteGroup.add(gatePost1);
+  const gatePost2 = gatePost1.clone();
+  gatePost2.position.x = 31 * S;
+  siteGroup.add(gatePost2);
+
+  // Driveway
+  const driveGeo = new THREE.PlaneGeometry(8 * S, 12 * S);
+  const driveMat = new THREE.MeshStandardMaterial({ color: 0x999999, roughness: 0.7 });
+  const drive = new THREE.Mesh(driveGeo, driveMat);
+  drive.rotation.x = -Math.PI / 2;
+  drive.position.set(28 * S, 0.01, -1.5 * S);
+  drive.receiveShadow = true;
+  siteGroup.add(drive);
+
+  // Trees (simple cones + cylinders)
+  const treePositions = [
+    [-5, 10], [-5, 30], [48, 10], [48, 30], [-8, 20],
+    [48, 40], [5, 45], [35, 45], [20, 48],
+  ];
+  treePositions.forEach(([tx, tz]) => {
+    const trunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.12, 1.5, 6),
+      new THREE.MeshStandardMaterial({ color: 0x5D3A1A, roughness: 0.9 })
+    );
+    trunk.position.set(tx * S, 0.75, tz * S);
+    trunk.castShadow = true;
+    siteGroup.add(trunk);
+
+    const canopy = new THREE.Mesh(
+      new THREE.ConeGeometry(0.8, 2.5, 8),
+      new THREE.MeshStandardMaterial({ color: 0x2E7D32, roughness: 0.9 })
+    );
+    canopy.position.set(tx * S, 2.8, tz * S);
+    canopy.castShadow = true;
+    siteGroup.add(canopy);
+  });
+
+  // Coconut trees (taller, near gate)
+  [22, 34].forEach(cx => {
+    const cTrunk = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.06, 0.1, 4, 6),
+      new THREE.MeshStandardMaterial({ color: 0x6D4C2A, roughness: 0.95 })
+    );
+    cTrunk.position.set(cx * S, 2, -2 * S);
+    siteGroup.add(cTrunk);
+
+    const cTop = new THREE.Mesh(
+      new THREE.SphereGeometry(0.6, 8, 6),
+      new THREE.MeshStandardMaterial({ color: 0x1B5E20, roughness: 0.9 })
+    );
+    cTop.position.set(cx * S, 4.2, -2 * S);
+    siteGroup.add(cTop);
+  });
+
+  // Coffee drying yard (PCC area behind house)
+  const yardGeo = new THREE.PlaneGeometry(9 * S, 6 * S);
+  const yardMat = new THREE.MeshStandardMaterial({ color: 0xBBAAAA, roughness: 0.7 });
+  const yard = new THREE.Mesh(yardGeo, yardMat);
+  yard.rotation.x = -Math.PI / 2;
+  yard.position.set(12 * S, 0.02, 48 * S);
+  yard.receiveShadow = true;
+  siteGroup.add(yard);
+
+  // Open garage (25×15 pillared)
+  const garageY = 0;
+  const garageW = 7.5 * S, garageD = 4.5 * S, garageH = 2.5 * S;
+  const garageMat = new THREE.MeshStandardMaterial({ color: 0xD0D0C8, roughness: 0.8 });
+  const garageRoof = new THREE.Mesh(new THREE.BoxGeometry(garageW, 0.1, garageD), garageMat);
+  garageRoof.position.set(8 * S, garageH, -2 * S);
+  siteGroup.add(garageRoof);
+
+  [3.5, 12.5].forEach(gx => {
+    [-0.5, -3.5].forEach(gz => {
+      const gp = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.1, garageH, 6),
+        new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5 })
+      );
+      gp.position.set(gx * S, garageH / 2, gz * S);
+      siteGroup.add(gp);
+    });
+  });
+
+  // Tulsi Vrindavan (NE corner)
+  const tulsiBase = new THREE.Mesh(
+    new THREE.BoxGeometry(0.5, 0.4, 0.5),
+    new THREE.MeshStandardMaterial({ color: 0xC4956A, roughness: 0.8 })
+  );
+  tulsiBase.position.set(40 * S, 0.2, -1 * S);
+  siteGroup.add(tulsiBase);
+  const tulsiPlant = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 8, 6),
+    new THREE.MeshStandardMaterial({ color: 0x2E7D32, roughness: 0.9 })
+  );
+  tulsiPlant.position.set(40 * S, 0.6, -1 * S);
+  siteGroup.add(tulsiPlant);
+
+  scene.add(siteGroup);
+}
+
+// ════════════════════════════════════════════
+//  ROOM LIST (LEFT PANEL)
+// ════════════════════════════════════════════
+
+function populateRoomList() {
+  const gfList = document.getElementById('gfRoomList');
+  const ffList = document.getElementById('ffRoomList');
+
+  Object.entries(rooms).forEach(([key, r]) => {
+    const card = document.createElement('div');
+    card.className = 'room-card';
+    card.dataset.key = key;
+    const hexColor = '#' + r.color.toString(16).padStart(6, '0');
+    card.innerHTML = `
+      <div class="room-color-dot" style="background:${hexColor}"></div>
+      <div>
+        <div class="room-name">${r.name}${r.heritage ? ' <span class="heritage-tag">Laterite</span>' : ''}</div>
+        <div class="room-size">${r.w}' × ${r.d}' = ${r.w * r.d} sqft &mdash; ${r.vastu}</div>
+      </div>`;
+    card.addEventListener('click', () => focusRoom(key));
+    (r.floor === 'gf' ? gfList : ffList).appendChild(card);
+  });
+}
+
+function focusRoom(key) {
+  const r = rooms[key];
+  if (!r) return;
+
+  // Highlight card
+  document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector(`.room-card[data-key="${key}"]`);
+  if (card) card.classList.add('active');
+
+  // Camera fly-to
+  const S = SCALE;
+  const baseY = r.floor === 'gf' ? GF_Y : FF_Y;
+  const cx = (r.x + r.w / 2) * S;
+  const cz = (r.z + r.d / 2) * S;
+  const cy = baseY + 1.5;
+
+  animateCamera(
+    { x: cx + 6, y: cy + 8, z: cz + 6 },
+    { x: cx, y: cy, z: cz }
+  );
+
+  showDetail(key);
+}
+
+function showDetail(key) {
+  const r = rooms[key];
+  if (!r) return;
+
+  document.getElementById('detailTitle').textContent = r.name;
+  const grid = document.getElementById('detailGrid');
+  grid.innerHTML = '';
+
+  const items = [
+    { label: 'Dimensions', value: `${r.w}' × ${r.d}'` },
+    { label: 'Area', value: `${r.w * r.d} sqft` },
+    { label: 'Vastu Direction', value: r.vastu },
+    { label: 'Floor', value: r.floor === 'gf' ? 'Ground Floor' : 'First Floor' },
+    { label: 'Wall Finish', value: r.wall, full: true },
+    { label: 'Flooring', value: r.flooring, full: true },
+  ];
+
+  items.forEach(it => {
+    const div = document.createElement('div');
+    div.className = 'detail-item' + (it.full ? ' full' : '');
+    div.innerHTML = `<div class="label">${it.label}</div><div class="value">${it.value}</div>`;
+    grid.appendChild(div);
+  });
+
+  if (r.features && r.features.length) {
+    const fDiv = document.createElement('div');
+    fDiv.className = 'detail-item full';
+    fDiv.innerHTML = `<div class="label">Features</div><div class="value" style="font-size:12px;line-height:1.7;">${r.features.map(f => '• ' + f).join('<br>')}</div>`;
+    grid.appendChild(fDiv);
+  }
+
+  if (r.heritage) {
+    const hDiv = document.createElement('div');
+    hDiv.className = 'detail-item full';
+    hDiv.style.background = 'rgba(196,149,106,0.08)';
+    hDiv.style.borderLeft = '3px solid #c4956a';
+    hDiv.innerHTML = `<div class="label" style="color:#c4956a;">Kodagu Heritage</div><div class="value" style="font-size:12px;line-height:1.7;">Exposed laterite stone walls (ಜಂಬಿಟ್ ಕಲ್ಲು) with linseed oil finish — traditional Kodagu Gowda Ainmane aesthetic. No plaster, no paint. Warm terracotta tone deepens with age.</div>`;
+    grid.appendChild(hDiv);
+  }
+
+  document.getElementById('roomDetail').style.display = 'block';
+}
+
+function closeDetail() {
+  document.getElementById('roomDetail').style.display = 'none';
+  document.querySelectorAll('.room-card').forEach(c => c.classList.remove('active'));
+}
+
+// ════════════════════════════════════════════
+//  ANIMATION & INTERACTIONS
+// ════════════════════════════════════════════
+
+function animate() {
+  animId = requestAnimationFrame(animate);
+  controls.update();
+
+  // Section cut
+  if (sectionMode) {
+    renderer.clippingPlanes = [new THREE.Plane(new THREE.Vector3(0, 0, 1), -13 * SCALE)];
+    renderer.localClippingEnabled = true;
+  } else {
+    renderer.clippingPlanes = [];
+    renderer.localClippingEnabled = false;
+  }
+
+  renderer.render(scene, camera);
+}
+
+function animateCamera(targetPos, targetLookAt) {
+  const startPos = { x: camera.position.x, y: camera.position.y, z: camera.position.z };
+  const startTarget = { x: controls.target.x, y: controls.target.y, z: controls.target.z };
+  const duration = 800;
+  const startTime = performance.now();
+
+  function step(time) {
+    let t = Math.min((time - startTime) / duration, 1);
+    t = t * t * (3 - 2 * t); // smoothstep
+
+    camera.position.x = startPos.x + (targetPos.x - startPos.x) * t;
+    camera.position.y = startPos.y + (targetPos.y - startPos.y) * t;
+    camera.position.z = startPos.z + (targetPos.z - startPos.z) * t;
+
+    controls.target.x = startTarget.x + (targetLookAt.x - startTarget.x) * t;
+    controls.target.y = startTarget.y + (targetLookAt.y - startTarget.y) * t;
+    controls.target.z = startTarget.z + (targetLookAt.z - startTarget.z) * t;
+
+    if (t < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function onMouseMove(e) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(roomMeshes);
+
+  const tooltip = document.getElementById('tooltip');
+  if (intersects.length > 0) {
+    const obj = intersects[0].object;
+    if (obj.userData.roomData) {
+      const r = obj.userData.roomData;
+      document.getElementById('ttName').textContent = r.name;
+      document.getElementById('ttSize').textContent = `${r.w}' × ${r.d}' = ${r.w * r.d} sqft`;
+      tooltip.style.display = 'block';
+      tooltip.style.left = (e.clientX + 15) + 'px';
+      tooltip.style.top = (e.clientY - 10) + 'px';
+      document.body.style.cursor = 'pointer';
+      hoveredRoom = obj.userData.roomKey;
+    }
+  } else {
+    tooltip.style.display = 'none';
+    document.body.style.cursor = 'default';
+    hoveredRoom = null;
+  }
+}
+
+function onMouseClick(e) {
+  if (hoveredRoom) {
+    focusRoom(hoveredRoom);
+  }
+}
+
+function onResize() {
+  const canvas = document.getElementById('canvas3d');
+  camera.aspect = canvas.clientWidth / canvas.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+}
+
+function onKeyDown(e) {
+  if (e.key === 'r' || e.key === 'R') resetCamera();
+  if (e.key === 'x' || e.key === 'X') toggleWallTransparency();
+  if (e.key === 'e' || e.key === 'E') toggleExplode();
+  if (e.key === 'n' || e.key === 'N') toggleDayNight();
+}
+
+// ── CONTROLS ──
+
+function resetCamera() {
+  animateCamera(
+    { x: 25, y: 18, z: 30 },
+    { x: 6, y: 2, z: 7 }
+  );
+  closeDetail();
+}
+
+function toggleRoof() {
+  roofVisible = !roofVisible;
+  roofGroup.visible = roofVisible;
+  document.getElementById('btnRoof').textContent = roofVisible ? 'Hide Roof' : 'Show Roof';
+  document.getElementById('btnRoof').classList.toggle('active', !roofVisible);
+}
+
+function toggleWallTransparency() {
+  xrayMode = !xrayMode;
+  [gfGroup, ffGroup].forEach(g => {
+    g.traverse(child => {
+      if (child.isMesh && child.material && child !== undefined) {
+        if (child.userData.roomKey) return; // keep floors
+        if (child.material.opacity !== undefined && !child.userData.roomKey) {
+          child.material.transparent = true;
+          child.material.opacity = xrayMode ? 0.15 : 0.85;
+          child.material.needsUpdate = true;
+        }
+      }
+    });
+  });
+  document.getElementById('btnWalls').classList.toggle('active', xrayMode);
+  document.getElementById('btnWalls').textContent = xrayMode ? 'Solid' : 'X-Ray';
+}
+
+function toggleExplode() {
+  isExploded = !isExploded;
+  const offset = isExploded ? 2 : 0;
+  ffGroup.position.y = isExploded ? 3 : 0;
+  roofGroup.position.y = isExploded ? 6 : 0;
+  document.getElementById('btnExplode').classList.toggle('active', isExploded);
+  document.getElementById('btnExplode').textContent = isExploded ? 'Collapse' : 'Explode';
+}
+
+function toggleDayNight() {
+  isNight = !isNight;
+  if (isNight) {
+    scene.background = new THREE.Color(0x0a0a1a);
+    scene.fog = new THREE.FogExp2(0x0a0a1a, 0.008);
+    scene.userData.ambient.intensity = 0.1;
+    scene.userData.sun.intensity = 0.05;
+    scene.userData.sun.color.setHex(0x4466AA);
+    scene.userData.hemi.intensity = 0.05;
+    scene.userData.fill.intensity = 0.0;
+    renderer.toneMappingExposure = 0.4;
+
+    // Add point lights for windows
+    if (!scene.userData.nightLights) {
+      scene.userData.nightLights = [];
+      const nlColor = 0xFFCC66;
+      [[34, 2, 4], [8, 2, 30], [33, 2, 31], [8, FF_Y / SCALE + 2, 30]].forEach(([nx, ny, nz]) => {
+        const pl = new THREE.PointLight(nlColor, 0.8, 8);
+        pl.position.set(nx * SCALE, ny * SCALE, nz * SCALE);
+        scene.add(pl);
+        scene.userData.nightLights.push(pl);
+      });
+    } else {
+      scene.userData.nightLights.forEach(l => l.visible = true);
+    }
+  } else {
+    scene.background = new THREE.Color(0x1a1a2e);
+    scene.fog = new THREE.FogExp2(0x1a1a2e, 0.006);
+    scene.userData.ambient.intensity = 0.4;
+    scene.userData.sun.intensity = 0.9;
+    scene.userData.sun.color.setHex(0xFFF4E0);
+    scene.userData.hemi.intensity = 0.3;
+    scene.userData.fill.intensity = 0.2;
+    renderer.toneMappingExposure = 1.0;
+    if (scene.userData.nightLights) {
+      scene.userData.nightLights.forEach(l => l.visible = false);
+    }
+  }
+  document.getElementById('btnDayNight').textContent = isNight ? 'Day' : 'Night';
+  document.getElementById('btnDayNight').classList.toggle('active', isNight);
+}
+
+function setFloor(f) {
+  document.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.floor-btn[data-floor="${f}"]`).classList.add('active');
+
+  gfGroup.visible = (f === 'all' || f === 'gf' || f === 'site');
+  ffGroup.visible = (f === 'all' || f === 'ff');
+  roofGroup.visible = roofVisible && (f === 'all' || f === 'ff' || f === 'site');
+  siteGroup.visible = (f === 'all' || f === 'site');
+
+  if (f === 'gf') animateCamera({ x: 20, y: 15, z: 20 }, { x: 6, y: 0, z: 7 });
+  if (f === 'ff') animateCamera({ x: 15, y: 15, z: 25 }, { x: 4, y: FF_Y, z: 7 });
+  if (f === 'site') animateCamera({ x: 25, y: 30, z: 25 }, { x: 6, y: 0, z: 7 });
+  if (f === 'all') resetCamera();
+}
+
+function toggleSection() {
+  sectionMode = !sectionMode;
+}
+
+// ── INIT ──
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

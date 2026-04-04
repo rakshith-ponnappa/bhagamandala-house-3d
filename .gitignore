@@ -1,0 +1,54 @@
+# Private / sensitive
+Bhagamandala_Cost_Estimate_PRIVATE*.md
+Bhagamandala_Cost_PRIVATE*.pdf
+
+# Old versions (v1, v2, v3) — keep only v4
+3D_Isometric*.png
+*_v2.png
+*_v3.png
+*_v2.md
+*_v3.md
+*_v2.pdf
+*_v3.pdf
+generate_plans.py
+generate_plans_v2.py
+generate_plans_v3.py
+
+# v1 unversioned originals
+Back_Elevation.png
+Front_Elevation.png
+GF_Plan.png
+FF_Plan.png
+Roof_Solar.png
+Site_Layout.png
+Bhagamandala_House_Construction_Plan.md
+Bhagamandala_Mane_Kannada.md
+Bhagamandala_Mane_Kannada.pdf
+Bhagamandala_Veedu_Malayalam.md
+Bhagamandala_Veedu_Malayalam.pdf
+Bhagamandala_House_Plan_EN.pdf
+Bhagamandala_Plans_Images.pdf
+
+# Context continuation files
+*.d
+
+# Backups
+*.bak
+
+# Fonts (downloaded)
+fonts/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
