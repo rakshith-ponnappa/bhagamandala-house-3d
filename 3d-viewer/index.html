@@ -611,8 +611,43 @@ function focusRoom(k){
   document.querySelectorAll('.rc').forEach(function(c){c.classList.remove('on')});
   var card=document.querySelector('.rc[data-k="'+k+'"]');if(card)card.classList.add('on');
   var cx=(r.x+r.w/2)*S,cz=(r.z+r.d/2)*S;var by=r.fl==='gf'?GFY:FFY;
-  fly({x:cx+3.5,y:by+4.5,z:cz+3.5},{x:cx,y:by+0.7,z:cz});
+  var isInterior=k.indexOf('bath')>=0||k.indexOf('passage')>=0||k.indexOf('stair')>=0||k.indexOf('store')>=0||k.indexOf('gwc')>=0;
+  if(isInterior){
+    // Fly camera INSIDE the room, looking at center from one corner
+    var eyeX=cx-r.w*S*0.3,eyeZ=cz-r.d*S*0.3;
+    fly({x:eyeX,y:by+WH*0.55,z:eyeZ},{x:cx,y:by+WH*0.25,z:cz});
+    // Make walls semi-transparent to see inside
+    peekWalls(r,by,true);
+  }else{
+    fly({x:cx+3.5,y:by+4.5,z:cz+3.5},{x:cx,y:by+0.7,z:cz});
+    peekWalls(null,0,false);
+  }
   showDet(k);
+}
+
+var _peekedWalls=[];
+function peekWalls(r,by,on){
+  // Restore previously peeked walls
+  _peekedWalls.forEach(function(w){w.material.opacity=0.9;w.material.transparent=false;w.material.needsUpdate=true;});
+  _peekedWalls=[];
+  if(!on||!r||xr)return;
+  // Find walls that overlap with this room's bounding box
+  var rx1=r.x*S-0.2,rx2=(r.x+r.w)*S+0.2;
+  var rz1=r.z*S-0.2,rz2=(r.z+r.d)*S+0.2;
+  var flG=r.fl==='gf'?gfG:ffG;
+  flG.traverse(function(ch){
+    if(!ch.isMesh||!ch.userData.wt)return;
+    var p=ch.position;
+    // Check if wall position overlaps room bounds
+    var wbb=new THREE.Box3().setFromObject(ch);
+    var rbb=new THREE.Box3(new THREE.Vector3(rx1,by,rz1),new THREE.Vector3(rx2,by+WH,rz2));
+    if(wbb.intersectsBox(rbb)){
+      ch.material.transparent=true;
+      ch.material.opacity=0.1;
+      ch.material.needsUpdate=true;
+      _peekedWalls.push(ch);
+    }
+  });
 }
 
 function showDet(k){
@@ -629,7 +664,7 @@ function showDet(k){
   document.getElementById('det').style.display='block';
 }
 
-window.closeDet=function(){document.getElementById('det').style.display='none';document.querySelectorAll('.rc').forEach(function(c){c.classList.remove('on')});};
+window.closeDet=function(){document.getElementById('det').style.display='none';document.querySelectorAll('.rc').forEach(function(c){c.classList.remove('on')});peekWalls(null,0,false);};
 
 function animate(){controls.update();renderer.render(scene,camera);}
 
@@ -657,7 +692,7 @@ function onMC(){if(hovered)focusRoom(hovered);}
 function onRS(){camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);}
 function onKD(e){if(e.key==='r'||e.key==='R')resetCam();if(e.key==='p'||e.key==='P')togPanel();if(e.key==='x'||e.key==='X')togXray();if(e.key==='e'||e.key==='E')togExplode();if(e.key==='n'||e.key==='N')togNight();}
 
-window.resetCam=function(){fly({x:16,y:7,z:-5},{x:6,y:2,z:7})};
+window.resetCam=function(){peekWalls(null,0,false);fly({x:16,y:7,z:-5},{x:6,y:2,z:7})};
 
 window.togRoof=function(){roofOn=!roofOn;roofG.visible=roofOn;var b=document.getElementById('bRoof');b.textContent=roofOn?'\u25EB Roof Off':'\u25EB Roof On';b.classList.toggle('on',!roofOn);};
 
