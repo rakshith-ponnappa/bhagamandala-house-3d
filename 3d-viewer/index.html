@@ -141,6 +141,7 @@ body{background:#0a0a0a;color:#e0e0e0;font-family:'Inter',sans-serif;overflow:hi
 <script type="module">
 import*as THREE from'three';
 import{OrbitControls}from'three/addons/controls/OrbitControls.js';
+import{RoomEnvironment}from'three/addons/environments/RoomEnvironment.js';
 
 const S=0.3;
 const WH=10*S;
@@ -178,6 +179,8 @@ let gfG,ffG,roofG,siteG,furG;
 let isNight=false,exploded=false,roofOn=true,xr=false;
 let hovered=null,panelOpen=true;
 let lateriteTex,woodTex,tileTex,kotaTex,grassTex,roofTex;
+let idleTimer=null,autoRotating=false;
+let flyAnim=null;
 
 function init(){
   const cv=document.getElementById('c');
@@ -196,7 +199,7 @@ function init(){
   camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,500);
   camera.position.set(16,7,-5);
 
-  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+  renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
   renderer.setSize(window.innerWidth,window.innerHeight);
   renderer.shadowMap.enabled=true;
@@ -205,13 +208,33 @@ function init(){
   renderer.toneMappingExposure=1.2;
   renderer.outputColorSpace=THREE.SRGBColorSpace;
 
+  // Environment map for realistic material reflections (like Matterport/Floorplanner)
+  const pmremGen=new THREE.PMREMGenerator(renderer);
+  pmremGen.compileEquirectangularShader();
+  scene.environment=pmremGen.fromScene(new RoomEnvironment(),0.04).texture;
+  pmremGen.dispose();
+
   controls=new OrbitControls(camera,renderer.domElement);
+  // Smooth damping — the #1 thing that makes orbit feel professional
   controls.enableDamping=true;
-  controls.dampingFactor=0.06;
+  controls.dampingFactor=0.1;
+  // Slower speeds = more precise, professional feel
+  controls.rotateSpeed=0.6;
+  controls.zoomSpeed=0.85;
+  controls.panSpeed=0.7;
+  // Zoom toward where the mouse is pointing (Matterport-style)
+  controls.zoomToCursor=true;
   controls.maxPolarAngle=Math.PI*0.48;
-  controls.minDistance=2;
-  controls.maxDistance=40;
+  controls.minDistance=1.5;
+  controls.maxDistance=45;
   controls.target.set(6,2,7);
+  // Keyboard navigation
+  controls.listenToKeyEvents(window);
+  controls.keyPanSpeed=12;
+  controls.keyRotateSpeed=1.5;
+  // Start idle timer for auto-rotate
+  resetIdleTimer();
+  controls.addEventListener('start',function(){stopAutoRotate();resetIdleTimer();});
 
   createTextures();
   setupLights();
@@ -733,14 +756,32 @@ function showDet(k){
 
 window.closeDet=function(){document.getElementById('det').style.display='none';document.querySelectorAll('.rc').forEach(function(c){c.classList.remove('on')});peekWalls(null,0,false);};
 
-function animate(){controls.update();renderer.render(scene,camera);}
+function resetIdleTimer(){clearTimeout(idleTimer);idleTimer=setTimeout(startAutoRotate,8000);}
+function startAutoRotate(){if(!autoRotating){autoRotating=true;controls.autoRotate=true;controls.autoRotateSpeed=0.4;}}
+function stopAutoRotate(){autoRotating=false;controls.autoRotate=false;}
 
-function fly(pos,tgt){
+function animate(time){
+  controls.update();
+  renderer.render(scene,camera);
+}
+
+function fly(pos,tgt,dur){
+  dur=dur||1000;
+  stopAutoRotate();resetIdleTimer();
+  if(flyAnim)cancelAnimationFrame(flyAnim);
   var sp={x:camera.position.x,y:camera.position.y,z:camera.position.z};
   var st={x:controls.target.x,y:controls.target.y,z:controls.target.z};
-  var dur=650,start=performance.now();
-  function step(t){var p=Math.min((t-start)/dur,1);p=p*p*(3-2*p);camera.position.set(sp.x+(pos.x-sp.x)*p,sp.y+(pos.y-sp.y)*p,sp.z+(pos.z-sp.z)*p);controls.target.set(st.x+(tgt.x-st.x)*p,st.y+(tgt.y-st.y)*p,st.z+(tgt.z-st.z)*p);if(p<1)requestAnimationFrame(step);}
-  requestAnimationFrame(step);
+  var start=performance.now();
+  function easeInOutCubic(t){return t<0.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;}
+  function step(t){
+    var raw=Math.min((t-start)/dur,1);
+    var p=easeInOutCubic(raw);
+    camera.position.set(sp.x+(pos.x-sp.x)*p,sp.y+(pos.y-sp.y)*p,sp.z+(pos.z-sp.z)*p);
+    controls.target.set(st.x+(tgt.x-st.x)*p,st.y+(tgt.y-st.y)*p,st.z+(tgt.z-st.z)*p);
+    controls.update();
+    if(raw<1){flyAnim=requestAnimationFrame(step);}else{flyAnim=null;}
+  }
+  flyAnim=requestAnimationFrame(step);
 }
 
 function onMM(e){
