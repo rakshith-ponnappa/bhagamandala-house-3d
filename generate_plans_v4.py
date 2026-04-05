@@ -13,8 +13,10 @@ import matplotlib.patches as patches
 from matplotlib.patches import FancyBboxPatch
 import numpy as np
 import os
+from datetime import date
 
 OUT = os.path.dirname(os.path.abspath(__file__))
+TODAY = date.today().strftime('%d %B %Y')
 
 # Professional color scheme
 C = {
@@ -159,6 +161,9 @@ def title_block(ax, title, subtitle, x, y):
                       edgecolor='#333333', linewidth=1.5))
     ax.text(x, y-1.2, subtitle, fontsize=8, ha='center', va='center',
             color='#666666', family='sans-serif')
+    ax.text(x, y-2.2, f'Date: {TODAY}  |  Bhagamandala, Kodagu  |  Contractor Copy',
+            fontsize=6, ha='center', va='center', color='#999999', family='sans-serif',
+            style='italic')
 
 
 def setup_ax(ax, xlim, ylim):
@@ -335,7 +340,7 @@ def gen_gf():
     # Veranda
     room_label(ax, 18, 4, 'PORCH / SITOUT / JAGALI', "42' x 8' = 336 sqft | Kota Stone | 5 Wood Pillars", 10)
     # Pillars
-    for px in [5, 13, 21, 29, 37]:
+    for px in [5, 13, 21, 27, 37]:
         pillar = plt.Circle((px, 3), 0.4, facecolor='#5D3A1A', edgecolor='#3E2723',
                              linewidth=1.5, zorder=5)
         ax.add_patch(pillar)
@@ -449,6 +454,66 @@ def gen_gf():
     ax.text(-5, 38, vastu_text, fontsize=5.5, va='top', color=C['vastu'],
             family='monospace', bbox=dict(boxstyle='round,pad=0.5', facecolor='#FFF3E0',
                                           edgecolor='#FFB74D', linewidth=1))
+
+    # ── ELECTRICAL POINTS (orange squares with label) ──
+    elec_pts = [
+        (28, 8.5, 'SB'),    # Hall entry switchboard
+        (2, 8.5, 'SB'),     # Kitchen entry switchboard
+        (2, 22.5, 'SB'),    # Master BR switchboard
+        (28, 24.5, 'SB'),   # BR2 switchboard
+        (18, 8.5, 'SB'),    # Stair switchboard
+        (21, 31, 'DB'),     # Distribution Board (Store)
+        (38, 11, 'TV'),     # Hall TV point
+        (3, 10, '15A'),     # Kitchen slab / mixer
+        (12, 10, '15A'),    # Kitchen fridge
+        (3, 34, 'USB'),    # Master bedside USB
+        (31, 34, 'USB'),    # BR2 bedside
+        (10, 17, '15A'),    # Kitchen chimney
+    ]
+    for ex, ey, elabel in elec_pts:
+        ec = '#FF6600' if elabel == 'DB' else '#FFA000'
+        esz = 0.7 if elabel == 'DB' else 0.5
+        rect = patches.Rectangle((ex-esz/2, ey-esz/2), esz, esz,
+                facecolor=ec, edgecolor='#333', linewidth=0.4, zorder=8, alpha=0.85)
+        ax.add_patch(rect)
+        ax.text(ex, ey, elabel, fontsize=3 if elabel=='DB' else 2.5, ha='center', va='center',
+                color='white', fontweight='bold', zorder=9)
+
+    # ── WATER POINTS (blue circles with label) ──
+    water_pts = [
+        (8, 9, 'C'),       # Kitchen sink cold
+        (12, 20, 'WM'),    # Kitchen washing machine
+        (19, 15, 'H'),     # Bath 1 shower hot
+        (24, 15, 'G'),     # Bath 1 geyser
+        (19, 25, 'H'),     # Bath 2 shower hot
+        (24, 25, 'G'),     # Bath 2 geyser
+        (39.5, 3, 'C'),    # GWC cold
+    ]
+    for wx, wy, wlabel in water_pts:
+        wc2 = '#0D47A1' if wlabel in ('H','G') else '#1E88E5'
+        circle = plt.Circle((wx, wy), 0.4, facecolor=wc2, edgecolor='#0D47A1',
+                            linewidth=0.4, zorder=8, alpha=0.85)
+        ax.add_patch(circle)
+        ax.text(wx, wy, wlabel, fontsize=2.5, ha='center', va='center',
+                color='white', fontweight='bold', zorder=9)
+
+    # ── LEGEND ──
+    legend_x, legend_y = -5, 20
+    ax.text(legend_x, legend_y, 'LEGEND', fontsize=6, fontweight='bold', color='#333')
+    # Electrical symbol
+    lr = patches.Rectangle((legend_x-0.3, legend_y-1.5), 0.6, 0.6,
+                            facecolor='#FFA000', edgecolor='#333', linewidth=0.4, zorder=8)
+    ax.add_patch(lr)
+    ax.text(legend_x+1.2, legend_y-1.2, 'Electrical point', fontsize=4.5, color='#333', va='center')
+    # Water symbol
+    lc = plt.Circle((legend_x, legend_y-3), 0.35, facecolor='#1E88E5', edgecolor='#0D47A1',
+                    linewidth=0.4, zorder=8)
+    ax.add_patch(lc)
+    ax.text(legend_x+1.2, legend_y-3, 'Water point', fontsize=4.5, color='#333', va='center')
+    # Legend labels
+    legend_items = 'SB=Switchboard  DB=Dist.Board\nTV=TV point  15A=Power socket\nUSB=USB charging  C=Cold water\nH=Hot water  G=Geyser  WM=Wash.Machine'
+    ax.text(legend_x, legend_y-5, legend_items, fontsize=3.5, color='#555',
+            family='monospace', va='top')
 
     plt.tight_layout()
     fig.savefig(os.path.join(OUT, 'GF_Plan_v4.png'), dpi=250, bbox_inches='tight',
@@ -738,6 +803,37 @@ def gen_site():
     # Garden
     ax.text(8, 12, 'GARDEN\nLAWN', fontsize=7, ha='center', color='#2E7D32', style='italic')
 
+    # ── EXTERNAL WATER TAPS ──
+    # Tap 1: Near entrance steps (right side) — wash feet before entering
+    tap1_x, tap1_y = 38, 4
+    ax.plot(tap1_x, tap1_y, 's', color='#1E88E5', markersize=8, zorder=6)
+    ax.text(tap1_x, tap1_y-1.5, 'EXT. TAP\n(wash feet)', fontsize=4, ha='center',
+            color='#0D47A1', fontweight='bold')
+    # Tap 2: Near parking/garage (left side) — gardening + car wash
+    tap2_x, tap2_y = 6, 30
+    ax.plot(tap2_x, tap2_y, 's', color='#1E88E5', markersize=8, zorder=6)
+    ax.text(tap2_x, tap2_y-1.5, 'EXT. TAP\n(garden/car)', fontsize=4, ha='center',
+            color='#0D47A1', fontweight='bold')
+
+    # ── OVERHEAD WATER TANK (on terrace) ──
+    tank_x, tank_y = 33, 33
+    tank = plt.Circle((tank_x, tank_y), 1.2, facecolor='#37474F', edgecolor='#263238', linewidth=1.5)
+    ax.add_patch(tank)
+    ax.text(tank_x, tank_y, 'OH\nTANK\n2000L', fontsize=3.5, ha='center', va='center',
+            color='white', fontweight='bold')
+
+    # ── MOTOR/PUMP (near well) ──
+    ax.plot(5, 16, 'D', color='#E65100', markersize=7, zorder=6)
+    ax.text(5, 14.5, 'PUMP\n1HP', fontsize=3.5, ha='center', color='#BF360C', fontweight='bold')
+
+    # ── ELECTRICITY METER (near gate compound wall) ──
+    meter_x, meter_y = 30, -1.5
+    mr = patches.Rectangle((meter_x-0.8, meter_y-0.6), 1.6, 1.2,
+                            facecolor='#FFA000', edgecolor='#E65100', linewidth=1, zorder=5)
+    ax.add_patch(mr)
+    ax.text(meter_x, meter_y, 'EB\nMETER', fontsize=3, ha='center', va='center',
+            color='white', fontweight='bold', zorder=6)
+
     # CCTV markers
     for cx, cy, label in [(14, 5, 'CAM1\nGate'), (54, 5, 'CAM2\nRoad'), (33, 43, 'CAM3\nBack'), (8, 42, 'CAM4\nPark')]:
         ax.plot(cx, cy, 'rv', markersize=6, zorder=5)
@@ -813,15 +909,15 @@ def gen_front_elev():
     ax.add_patch(gf_wall)
 
     # Wooden pillars (5 nos for wider veranda)
-    for px in [5, 13.5, 22, 30.5, 39]:
+    for px in [5, 13, 21, 27, 38]:
         pts = np.array([[px-0.7, 4.5], [px+0.7, 4.5], [px+0.5, 13.8], [px-0.5, 13.8]])
         pillar = patches.Polygon(pts, facecolor='#5D3A1A', edgecolor='#3E2723', linewidth=1.5)
         ax.add_patch(pillar)
         cap = patches.Rectangle((px-0.9, 13.5), 1.8, 0.5, facecolor='#5D3A1A', edgecolor='#3E2723', linewidth=1)
         ax.add_patch(cap)
 
-    # Main door
-    door = patches.Rectangle((20, 4.5), 4, 7, facecolor='#5D3A1A', edgecolor='#3E2723', linewidth=2)
+    # Main door (centered between pillars at 27 and 38, at x=32)
+    door = patches.Rectangle((30, 4.5), 4, 7, facecolor='#5D3A1A', edgecolor='#3E2723', linewidth=2)
     ax.add_patch(door)
     ax.plot([22, 22], [4.5, 11.5], color='#3E2723', linewidth=1)
     ax.text(22, 4, 'MAIN DOOR 4\'x7\' TEAK', fontsize=5.5, ha='center', color=C['door'], fontweight='bold')
