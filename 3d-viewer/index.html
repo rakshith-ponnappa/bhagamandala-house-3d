@@ -385,7 +385,7 @@ function buildGF(){
   mkDoor(gfG,32,24,true,GFY,3);
   mkDoor(gfG,8,8,true,GFY,3);
 
-  [5,13,21,29,37].forEach(function(px){
+  [5,13,21,27,37].forEach(function(px){
     var base=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.12,0.32),mMat(0x888888,{r:0.6}));base.position.set(px*S,GFY+0.06,3*S);gfG.add(base);
     var col=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.12,WH-0.2,12),mMat(0x5D3A1A,{r:0.55}));col.position.set(px*S,GFY+WH/2,3*S);col.castShadow=true;gfG.add(col);
     var cap=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.1,0.32),mMat(0x5D3A1A,{r:0.5}));cap.position.set(px*S,GFY+WH-0.05,3*S);gfG.add(cap);
@@ -498,6 +498,32 @@ function buildSite(){
 
   var tB=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.35,0.4),mMat(0xC4956A,{r:0.8}));tB.position.set(40*S,0.175-0.5*S,-0.8*S);siteG.add(tB);
   var tL=new THREE.Mesh(new THREE.SphereGeometry(0.18,8,6),mMat(0x2E7D32,{r:0.9}));tL.position.set(40*S,0.45-0.5*S,-0.8*S);siteG.add(tL);
+
+  // ── EXTERNAL WATER TAPS ──
+  // [x, baseY, z] — tap near entrance (right of steps) + tap near parking (left side)
+  [[35,-0.4,1],[6,-0.4,-0.5]].forEach(function(tp){
+    var pV=new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.55*S,6),mMat(0x888888,{m:0.5,r:0.3}));
+    pV.position.set(tp[0]*S,tp[1]*S+0.275*S,tp[2]*S);siteG.add(pV);
+    var sp=new THREE.Mesh(new THREE.CylinderGeometry(0.008,0.008,0.12*S,6),mMat(0xBBBBBB,{m:0.6,r:0.2}));
+    sp.rotation.z=Math.PI/2;sp.position.set(tp[0]*S+0.06*S,tp[1]*S+0.52*S,tp[2]*S);siteG.add(sp);
+    var bp=bx(0.04*S,0.03*S,0.04*S,0x4488CC);bp.position.set(tp[0]*S,tp[1]*S+0.56*S,tp[2]*S);siteG.add(bp);
+    var dr=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.015,8),mMat(0x666666,{r:0.5}));
+    dr.position.set(tp[0]*S+0.04*S,tp[1]*S+0.008,tp[2]*S);dr.receiveShadow=true;siteG.add(dr);
+  });
+  // ── OVERHEAD WATER TANK (on terrace, 2000L) ──
+  var tkB=FFY+WH+SLAB*0.3;
+  [[-0.22,-0.22],[0.22,-0.22],[-0.22,0.22],[0.22,0.22]].forEach(function(lp){
+    var lg=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,1.2*S,6),mMat(0x666666,{m:0.4,r:0.3}));
+    lg.position.set((22+lp[0])*S,tkB+0.6*S,(36+lp[1])*S);siteG.add(lg);
+  });
+  var tk=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.3,1*S,12),mMat(0x222222,{r:0.75}));
+  tk.position.set(22*S,tkB+1.7*S,36*S);tk.castShadow=true;siteG.add(tk);
+  var tLd=new THREE.Mesh(new THREE.CylinderGeometry(0.37,0.37,0.03,12),mMat(0x333333,{r:0.6}));
+  tLd.position.set(22*S,tkB+2.22*S,36*S);siteG.add(tLd);
+  // ── ELECTRICITY METER BOARD (near gate on compound wall) ──
+  var em=bx(0.3*S,0.4*S,0.08*S,0xCCCCBB);em.position.set(28*S,0.75*S,-2.8*S);siteG.add(em);
+  var eg=new THREE.Mesh(new THREE.BoxGeometry(0.18*S,0.18*S,0.01),mMat(0xAABBCC,{a:0.5,r:0.05,m:0.1}));
+  eg.position.set(28*S,0.8*S,-2.74*S);siteG.add(eg);
 }
 
 function addTree(g,x,z,sc){
@@ -593,6 +619,47 @@ function buildFurniture(){
   var shelf=bx(0.8*S,1.8*S,2.5*S,0x5D3A1A);shelf.position.set(25*S,FFY+0.9*S,14*S);g.add(shelf);
   addSwing(g,3*S,FFY,42*S);
   var daybed=bx(1.8*S,0.35*S,3.5*S,0xC4956A);daybed.position.set(13*S,FFY+0.45*S,43*S);g.add(daybed);
+
+  // ── ENHANCED BATHROOM FIXTURES ──
+  var gM2=mMat(0x88DDEE,{a:0.18,r:0.05,m:0.12,ds:true}),crM=mMat(0xCCCCCC,{m:0.7,r:0.15});
+  // Shower glass enclosures [originX(ft),floorY,originZ(ft),widthFt,depthFt]
+  [[17,GFY,14,4,3],[17,GFY,24,4,3],[17,FFY,27,4,4]].forEach(function(p){
+    var ox=p[0]*S,by=p[1],oz=p[2]*S,sw=p[3]*S,sd=p[4]*S,h=WH*0.65;
+    var gw1=new THREE.Mesh(new THREE.BoxGeometry(0.02,h,sd),gM2);gw1.position.set(ox+sw,by+h/2,oz+sd/2);g.add(gw1);
+    var gw2=new THREE.Mesh(new THREE.BoxGeometry(sw,h,0.02),gM2);gw2.position.set(ox+sw/2,by+h/2,oz+sd);g.add(gw2);
+    var tr2=bx(sw,0.04,sd,0xE8E8E8);tr2.position.set(ox+sw/2,by+0.02,oz+sd/2);g.add(tr2);
+    var arm=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.3*S,6),crM);arm.rotation.x=Math.PI/2;arm.position.set(ox+sw/2,by+WH*0.68,oz+0.15*S);g.add(arm);
+    var hd=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.06,0.012,12),crM);hd.position.set(ox+sw/2,by+WH*0.68,oz+0.32*S);g.add(hd);
+  });
+  // Geysers (25L water heater, white box high on wall)
+  [[24.5,GFY,14],[24.5,GFY,24],[24.5,FFY,27]].forEach(function(p){
+    var gy=bx(0.28*S,0.38*S,0.22*S,0xF5F5F5);gy.position.set(p[0]*S,p[1]+WH*0.7,p[2]*S);g.add(gy);
+    var ld=new THREE.Mesh(new THREE.SphereGeometry(0.008,6,4),mMat(0xFF2200,{r:0.1}));ld.position.set(p[0]*S,p[1]+WH*0.75,(p[2]+0.12)*S);g.add(ld);
+  });
+  // Mirrors above basin counters (reflective)
+  [[21,GFY,15.6],[21,GFY,25.6],[21,FFY,28.6]].forEach(function(p){
+    var fr=new THREE.Mesh(new THREE.BoxGeometry(0.58*S,0.43*S,0.015),mMat(0x888888,{m:0.5,r:0.3}));fr.position.set(p[0]*S,p[1]+WH*0.48,p[2]*S);g.add(fr);
+    var mr=new THREE.Mesh(new THREE.BoxGeometry(0.55*S,0.4*S,0.02),mMat(0xDDEEFF,{r:0.02,m:0.85}));mr.position.set(p[0]*S,p[1]+WH*0.48,p[2]*S+0.005);g.add(mr);
+  });
+  // Towel rods (chrome)
+  [[25,GFY,18],[25,GFY,28],[25,FFY,31]].forEach(function(p){
+    var rd=new THREE.Mesh(new THREE.CylinderGeometry(0.005,0.005,0.45*S,6),crM);rd.rotation.z=Math.PI/2;rd.position.set(p[0]*S,p[1]+1.4*S,p[2]*S);g.add(rd);
+    [-1,1].forEach(function(s2){var bk=bx(0.02,0.05,0.03,0xBBBBBB);bk.position.set(p[0]*S+s2*0.2*S,p[1]+1.4*S,p[2]*S);g.add(bk);});
+  });
+  // ── KITCHEN CHIMNEY + HOOD ──
+  var hd2=bx(1.2*S,0.1*S,0.55*S,0x444444);hd2.position.set(8*S,GFY+WH*0.68,9*S);g.add(hd2);
+  var cp=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.08,WH*0.28,8),mMat(0x555555,{m:0.3,r:0.4}));cp.position.set(8*S,GFY+WH*0.84,9*S);g.add(cp);
+  // ── WASHING MACHINE (kitchen utility area) ──
+  var wm=bx(0.5*S,0.65*S,0.5*S,0xE8E8E8);wm.position.set(14*S,GFY+0.325*S,20*S);g.add(wm);
+  var wd=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.02,16),mMat(0xAABBCC,{a:0.5,r:0.05,m:0.1}));wd.rotation.x=Math.PI/2;wd.position.set(14*S,GFY+0.38*S,19.75*S);g.add(wd);
+  // ── SWITCHBOARDS (near room doors) ──
+  [[28,GFY,8.3],[2,GFY,8.3],[2,GFY,22.3],[28,GFY,24.3],[18,GFY,8.3],[4,FFY,22.3],[18,FFY,22.3]].forEach(function(p){
+    var sb=bx(0.18*S,0.12*S,0.02,0xFFFFF0);sb.position.set(p[0]*S,p[1]+1.2*S,p[2]*S);g.add(sb);
+    for(var j=0;j<3;j++){var ss=bx(0.03*S,0.02*S,0.005,0x333333);ss.position.set((p[0]-0.04+j*0.04)*S,p[1]+1.2*S,p[2]*S+0.012);g.add(ss);}
+  });
+  // ── MCB / DISTRIBUTION BOARD (Store room) ──
+  var db=bx(0.4*S,0.5*S,0.04,0xEEEEDD);db.position.set(21*S,GFY+WH*0.5,30.2*S);g.add(db);
+  for(var mi=0;mi<6;mi++){var mc=bx(0.04*S,0.06*S,0.02,0x333333);mc.position.set((19.5+mi*0.5)*S,GFY+WH*0.52,30.22*S);g.add(mc);}
 }
 
 function populatePanel(){

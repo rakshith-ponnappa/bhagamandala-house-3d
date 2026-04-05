@@ -671,6 +671,8 @@ All three bedrooms (Master GF, BR2 GF, FF Master) feature **exposed laterite sto
 | **Work Room (FF)** | **2 (LED panel)** | **1** | **6** | **2 (PC, printer)** | **6** | **LAN port, 2× USB-C, UPS point** |
 | Sitout | 2 (LED wall) | — | 1 | — | 2 | Waterproof socket |
 | External | 4 (motion LED) | — | — | — | 2 | CCTV power (4 pts) |
+| **Ext. Taps** | — | — | — | — | — | **2 external bib cocks** |
+| **Washing Machine** | — | — | — | **1 (15A)** | 1 | **Kitchen NE, cold water inlet + drain** |
 
 **Total Load:** ~6 kW (no AC) / ~12 kW (with ACs)
 **Supply:** 3-phase CESCOM connection
@@ -701,6 +703,19 @@ Bath 1 and Bath 2 share a wall → **single plumbing stack** for both GF bathroo
 - **Blackwater:** PVC → Septic tank (NW, 2-chamber, 15 ft from well)
 - **Kitchen waste:** Grease trap → Grey water line
 - **Rainwater:** Open drains → Recharge pit → Natural slope
+
+## External Water Taps (IMPORTANT — mark during plumbing rough-in)
+- **Tap 1 — Entrance (Right of main steps):** 15mm GI pipe from main line. Chrome bib cock. Drain plate below → connects to front garden drain. **Purpose:** Wash feet before entering house (Kodagu tradition, also muddy monsoon months).
+- **Tap 2 — Parking/Garage (Left side, near garage):** 15mm GI pipe from main line. Chrome bib cock + hose connector. Drain to garden slope. **Purpose:** Gardening watering, car wash, general outdoor cleaning.
+- **Both taps:** Run pipes during wall construction stage itself. Embed in compound wall / plinth wall. Leave stub-out with cap until fixture stage.
+- **Note:** Both external taps must have individual stop cocks (gate valve) inside the store room near the main line for isolation.
+
+## Washing Machine Point (Kitchen)
+- **Location:** Kitchen NE corner, near washing area (x=14ft, z=20ft in plan)
+- **Water:** Cold water inlet with wall-mounted bib cock (15mm)
+- **Drain:** Floor drain 3" connected to greywater line
+- **Electrical:** Dedicated 15A socket, 1.2m height from floor
+- **Note:** Leave space for front-load washing machine 24"×24"×33"
 
 ---
 
