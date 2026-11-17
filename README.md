@@ -155,7 +155,9 @@ Pipeline steps: **Images → PDFs → 3D Sync → Context Update**
 
 ## License
 
-This project is personal/educational. The architectural design is for a specific plot in Kodagu, Karnataka.
+© 2026 Rakshith Ponnappa. Licensed under [CC BY-NC-ND 4.0](LICENSE): you may view and share this work with
+credit, but not use it commercially or create derivative designs from it. This is a personal/educational project;
+the architectural design is for a specific plot in Kodagu, Karnataka.
 
 ---
 
